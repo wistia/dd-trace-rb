@@ -74,7 +74,14 @@ module Datadog
           def resolve(redis_config)
             custom = redis_config.custom[:datadog] || {}
 
-            Datadog.configuration.tracing[:redis, redis_config.server_url].to_h.merge(custom)
+            # Fix IPv6 endpoint resolution
+            server_url = if redis_config.host.count(":") >= 2
+              redis_config.server_url.gsub(redis_config.host, "[#{redis_config.host}]")
+            else
+              redis_config.server_url
+            end
+
+            Datadog.configuration.tracing[:redis, server_url].to_h.merge(custom)
           end
         end
       end
